@@ -1,54 +1,113 @@
 const express = require('express');
 const cors = require('cors');
-const { runChat } = require('./gemini-service');
-const { generateSpeech } = require('./tts-service'); // Importa o serviço TTS
+const { runChat, resetHistory, getHistory } = require('./gemini-service');
 
 const app = express();
-const port = 3000; // Porta onde o backend vai rodar
+const port = process.env.PORT || 3000;
 
 // Middlewares
-app.use(cors()); // Habilita CORS
-app.use(express.json()); // Permite entender JSON
+app.use(cors());
+app.use(express.json());
 
-// Endpoint para o Chat com Gemini
+// Log de requisições
+app.use((req, res, next) => {
+  console.log(`\n[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  next();
+});
+
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'online',
+    model: 'gemini-2.5-flash',
+    timestamp: new Date().toISOString(),
+    uptime: Math.floor(process.uptime())
+  });
+});
+
+// Chat com Gemini 2.5
 app.post('/api/chat', async (req, res) => {
-  const userInput = req.body.text;
-  if (!userInput) {
-    return res.status(400).json({ error: 'Texto do usuário não fornecido.' });
-  }
+  try {
+    const userInput = req.body.text;
+    
+    if (!userInput || typeof userInput !== 'string' || userInput.trim() === '') {
+      return res.status(400).json({ error: 'Texto inválido' });
+    }
 
-  console.log(`\n[User Input]: ${userInput}`);
-  const geminiResponse = await runChat(userInput);
+    if (userInput.length > 1000) {
+      return res.status(400).json({ error: 'Texto muito longo (máx 1000 chars)' });
+    }
 
-  if (!geminiResponse) {
-     return res.status(500).json({ error: 'Erro ao processar a resposta da IA.' });
+    console.log(`[User] 💬: "${userInput.substring(0, 100)}..."`);
+    
+    const geminiResponse = await runChat(userInput);
+
+    if (!geminiResponse) {
+      return res.status(500).json({ error: 'Erro ao processar resposta' });
+    }
+    
+    console.log(`[Response] 📤: Type=${geminiResponse.type}`);
+    res.json(geminiResponse);
+    
+  } catch (error) {
+    console.error('[Chat Error] ❌:', error);
+    res.status(500).json({ error: 'Erro interno' });
   }
-  
-  console.log(`[Backend Response]: Type=${geminiResponse.type}`);
-  res.json(geminiResponse); 
 });
 
-// Endpoint para Text-to-Speech
-app.post('/api/tts', async (req, res) => {
-  const textToSpeak = req.body.text;
-  if (!textToSpeak) {
-    return res.status(400).json({ error: 'Texto para fala não fornecido.' });
+// Ver histórico
+app.get('/api/history', (req, res) => {
+  try {
+    const history = getHistory();
+    res.json({ 
+      count: history.length / 2, // Divide por 2 (user + model)
+      messages: history 
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Erro ao buscar histórico' });
   }
-
-  console.log(`\n[TTS Request]: "${textToSpeak.substring(0, 50)}..."`);
-  const audioBuffer = await generateSpeech(textToSpeak);
-
-  if (!audioBuffer) {
-    return res.status(500).json({ error: 'Erro ao gerar o áudio.' });
-  }
-
-  // Envia o áudio de volta para o frontend
-  res.setHeader('Content-Type', 'audio/mpeg');
-  res.send(audioBuffer);
-  console.log('[TTS Response]: Audio MP3 enviado.');
 });
 
-// Inicia o servidor
-app.listen(port, () => {
-  console.log(`Servidor backend rodando em http://localhost:${port}`);
+// Reset histórico
+app.post('/api/reset', (req, res) => {
+  try {
+    resetHistory();
+    res.json({ message: 'Histórico resetado com sucesso' });
+  } catch (error) {
+    res.status(500).json({ error: 'Erro ao resetar' });
+  }
 });
+
+// 404
+app.use((req, res) => {
+  res.status(404).json({ error: 'Rota não encontrada' });
+});
+
+// Inicia servidor
+const server = app.listen(port, () => {
+  console.log('\n╔════════════════════════════════════════════╗');
+  console.log('║     JARVIS Backend Server v2.0            ║');
+  console.log('║     Powered by Gemini 2.5 Flash          ║');
+  console.log('╚════════════════════════════════════════════╝');
+  console.log(`\n🚀 Servidor: http://localhost:${port}`);
+  console.log(`🤖 Modelo: gemini-2.5-flash`);
+  console.log(`⏰ Iniciado: ${new Date().toLocaleString('pt-BR')}`);
+  console.log('\n📡 Endpoints disponíveis:');
+  console.log('   GET  /health       - Status do servidor');
+  console.log('   POST /api/chat     - Chat com JARVIS');
+  console.log('   GET  /api/history  - Ver histórico');
+  console.log('   POST /api/reset    - Limpar histórico');
+  console.log('\n✨ Aguardando conexões...\n');
+});
+
+// Shutdown gracioso
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
+
+function shutdown() {
+  console.log('\n\n🛑 Encerrando servidor...');
+  server.close(() => {
+    console.log('✅ Servidor encerrado com sucesso');
+    process.exit(0);
+  });
+}

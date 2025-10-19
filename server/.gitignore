@@ -1,0 +1,5 @@
+# Ignora o arquivo de variáveis de ambiente
+.env
+
+# Ignora quaisquer credenciais .json que você tenha baixado
+*.json

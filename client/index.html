@@ -3,63 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Companion 3D</title>
+    <title>JARVIS - AI Companion</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        #interaction-ui {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 10;
-            background-color: rgba(0, 0, 0, 0.6); /* Fundo um pouco mais escuro */
-            padding: 15px; /* Mais padding */
-            border-radius: 8px; /* Bordas mais arredondadas */
-            text-align: center;
-            display: flex; /* Alinha botão e status lado a lado */
-            align-items: center; /* Centraliza verticalmente */
-            gap: 15px; /* Espaço entre botão e status */
-        }
-        #interaction-ui button {
-            padding: 12px 25px; /* Botão maior */
-            font-size: 16px;
-            cursor: pointer;
-            border: none;
-            border-radius: 5px;
-            background-color: #4CAF50; /* Verde */
-            color: white;
-            min-width: 120px; /* Largura mínima */
-        }
-         #interaction-ui button:disabled {
-             background-color: #aaa; /* Cinza quando desabilitado */
-             cursor: not-allowed;
-         }
-        #status-div {
-            color: #eee; /* Cor de texto mais clara */
-            font-family: sans-serif;
-            font-size: 14px;
-            min-height: 1.2em; 
-            text-align: left; /* Alinha o texto do status à esquerda */
-        }
-
-        /* Mantém os botões de teste */
-        #test-buttons { 
-            position: fixed;
-            bottom: 10px;
-            left: 10px;
-            z-index: 10;
-        }
-        #test-buttons button {
-            margin-right: 5px;
-            padding: 5px 10px;
-        }
-    </style>
 </head>
 <body>
     <canvas id="three-canvas"></canvas>
 
     <div id="interaction-ui">
-        <button id="talk-button">Carregando...</button> <div id="status-div">Aguardando inicialização...</div>
+        <button id="talk-button">Carregando...</button>
+        <div id="status-div">Aguardando inicialização...</div>
     </div>
 
     <div id="test-buttons">
