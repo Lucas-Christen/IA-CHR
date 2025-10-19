@@ -5,9 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Companion 3D</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Estilos básicos para os botões de teste */
+        #test-buttons {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            z-index: 10;
+        }
+        #test-buttons button {
+            margin-right: 5px;
+            padding: 5px 10px;
+        }
+    </style>
 </head>
 <body>
     <canvas id="three-canvas"></canvas>
+
+    <div id="test-buttons">
+        <button data-anim="anim_waving">Acenar</button>
+        <button data-anim="anim_spin">Girar</button>
+        <button data-anim="anim_sitting_down">Sentar</button>
+        <button data-anim="anim_laying">Deitar</button>
+        <button data-anim="anim_pointing">Apontar</button>
+        <button data-anim="anim_talking">Falar (teste)</button> 
+        <button data-anim="anim_idle">Parar (Idle)</button> 
+    </div>
     
     <script type="module" src="/main.js"></script>
 </body>
